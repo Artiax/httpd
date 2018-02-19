@@ -1,8 +1,6 @@
 def image;
 def commit;
 
-echo "Spawning a slave for this job..."
-
 node("docker") {
   stage("Clone") {
     git branch: 'master', url: "https://github.com/Artiax/httpd.git", changelog: false, poll: false
@@ -15,7 +13,11 @@ node("docker") {
   }
 
   stage("Tag") {
-    image.tag "${commit}"
+    timestamp = sh(returnStdout: true, script: "date '+%Y-%m-%d-%H%M'").trim()
+    commit = sh(returnStdout: true, script: "git rev-parse HEAD").trim().take(8)
+    tag = "${timestamp}-${commit}"
+
+    image.tag "${tag}"
     image.tag "latest"
   }
 }
@@ -23,7 +25,7 @@ node("docker") {
 timeout(time: 15, unit: 'MINUTES') {
   try {
     input(id: 'deploy', message: 'Deploy this image?')
-    build job: 'deployments/httpd', parameters: [string(name: 'TAG', value: "${commit}")], wait: false
+    build job: 'deployments/httpd', parameters: [string(name: 'RELEASE_NAME', value: 'jenkins'),string(name: 'TAG', value: "${tag}")], wait: false
   } catch(err) {
     currentBuild.result = 'SUCCESS'
   }
