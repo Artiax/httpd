@@ -1,22 +1,21 @@
 def image;
-def commit;
+def tag;
 
 node("docker") {
   stage("Clone") {
     git branch: 'master', url: "https://github.com/Artiax/httpd.git", changelog: false, poll: false
     commit = sh(returnStdout: true, script: "git rev-parse HEAD").trim().take(8)
-    currentBuild.description = "${commit}"
+    timestamp = sh(returnStdout: true, script: "date '+%Y-%m-%d-%H%M'").trim()
+    tag = "${timestamp}-${commit}"
   }
 
   stage("Build") {
-    sh "sed -ri 's/COMMIT_ID/${commit}/' index.html"
+    currentBuild.description = "${tag}"
+    sh "sed -ri 's/TAG/${tag}/' index.html"
     image = docker.build 'httpd'
   }
 
   stage("Tag") {
-    timestamp = sh(returnStdout: true, script: "date '+%Y-%m-%d-%H%M'").trim()
-    commit = sh(returnStdout: true, script: "git rev-parse HEAD").trim().take(8)
-    tag = "${timestamp}-${commit}"
 
     image.tag "${tag}"
     image.tag "latest"
