@@ -10,7 +10,7 @@ node("docker") {
   }
 
   stage("Build") {
-    currentBuild.description = "${tag}"
+    currentBuild.displayName = "${tag}"
     sh "sed -ri 's/TAG/${tag}/' index.html"
     image = docker.build 'httpd'
   }
