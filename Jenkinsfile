@@ -5,6 +5,7 @@ node("docker") {
   stage("Clone") {
     git branch: 'master', url: "https://github.com/Artiax/httpd.git", changelog: false, poll: false
     commit = sh(returnStdout: true, script: "git rev-parse HEAD").trim().take(8)
+    currentBuild.description = "${commit}"
   }
 
   stage("Build") {
